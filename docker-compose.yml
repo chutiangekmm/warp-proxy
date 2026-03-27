@@ -1,0 +1,32 @@
+version: "3.8"
+services:
+  warp-proxy:
+    build: .
+    container_name: warp-proxy
+    restart: unless-stopped
+    networks:
+      - warp-proxy-net
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+    #   # 【极其重要】请务必将以下账号密码改成你自己强密码，否则端口一旦暴露会被扫爆
+    #   - PROXY_USER=PROXY_USER
+    #   - PROXY_PASS=PROXY_PASS
+        - REFRESH_INTERVAL=30
+    #注意 如果你仅作为本机代理节点使用则ports无需映射
+    #目前设置127.0.0.1是为了安全起见，避免暴露在局域网或公网中，如果需要局域网访问请改成你的内网ip
+    ports:
+      - "127.0.0.1:1081:1080"   # 你可以使用设备连接的 SOCKS5 端口 
+      - "127.0.0.1:1082:8080"   # 你可以使用设备连接的 HTTP 端口
+    volumes:
+      - ./warp-data:/var/lib/cloudflare-warp   # 挂载WARP的注册身份缓存
+
+#在最外层声明这个自定义网络
+#docker network create warp-proxy-net 创建网络
+networks:
+  warp-proxy-net:
+    name: warp-proxy-net  # 显式指定网络名称，方便外部容器直接引用
+    # driver: bridge
+    external: true
