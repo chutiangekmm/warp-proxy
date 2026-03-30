@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   warp-proxy:
-    build: .
+    image: ghcr.io/chutiangekmm/warp-proxy:latest
     container_name: warp-proxy
     restart: unless-stopped
     networks:
@@ -23,10 +23,15 @@ services:
     volumes:
       - ./warp-data:/var/lib/cloudflare-warp   # 挂载WARP的注册身份缓存
 
-#在最外层声明这个自定义网络
-#docker network create warp-proxy-net 创建网络
 networks:
   warp-proxy-net:
     name: warp-proxy-net  # 显式指定网络名称，方便外部容器直接引用
-    # driver: bridge
-    external: true
+    driver: bridge
+
+# #在最外层声明这个自定义网络 如果需要其他容器使用 则注释上方网络创建取消下方内容注释
+# #docker network create warp-proxy-net 创建网络
+# networks:
+#   warp-proxy-net:
+#     name: warp-proxy-net  # 显式指定网络名称，方便外部容器直接引用
+#     # driver: bridge
+#     external: true
