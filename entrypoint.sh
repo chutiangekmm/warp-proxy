@@ -42,7 +42,8 @@ fi
 
 # 构造 GOST 所需的鉴权字符串
 AUTH_STRING=""
-if [ -n "$PROXY_USER" ] && [ -n "$PROXY_PASS" ]; then
+# 【修复点】下面这里 if 和 [ 之间加了空格
+if [ -n "$PROXY_USER" ] &&[ -n "$PROXY_PASS" ]; then
     AUTH_STRING="${PROXY_USER}:${PROXY_PASS}@"
     echo "Proxy credentials loaded -> user: $PROXY_USER"
 else
