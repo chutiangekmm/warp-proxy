@@ -17,7 +17,6 @@ x-warp-node: &warp-node
     - WEB_USER=${WEB_USER:-admin}
     - WEB_PASS=${WEB_PASS:-change_this_web_password}
     - WEB_SESSION_SECRET=${WEB_SESSION_SECRET:-change_this_session_secret}
-    - REFRESH_INTERVAL=${REFRESH_INTERVAL:-30}
   expose:
     - "1080"
     - "8080"

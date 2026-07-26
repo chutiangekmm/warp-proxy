@@ -93,7 +93,6 @@ PROXY_PASS=your_strong_password
 WEB_USER=admin
 WEB_PASS=your_web_panel_password
 WEB_SESSION_SECRET=your_long_random_session_secret
-REFRESH_INTERVAL=30
 ```
 
 ### `PROXY_USER`
@@ -122,19 +121,10 @@ Web 登录会话签名密钥。建议使用长随机字符串。正式部署前�
 
 设置为 `1` 时，浏览器登录 cookie 只会通过 HTTPS 发送。直接用 Compose 的 HTTP 面板访问时应保持默认 `0`。
 
-### `REFRESH_INTERVAL`
+### IP 轮转
 
-WARP 刷新间隔，单位为分钟。
-
-- 正整数：启用自动刷新
-- `0`、空值、未设置、非法值：关闭自动刷新
-
-当启用时，容器会每隔对应分钟执行一次：
-
-1. `warp-cli disconnect`
-2. `warp-cli connect`
-
-注意：自动刷新会短暂中断已有连接，且不保证一定获得新的出口 IP。
+通过管理面板的 License 池和自动轮转设置切换注册身份，从而获得新的出口 IP。
+项目不会再以环境变量定时断开并重连当前 WARP 连接；该做法会中断代理流量，且不能可靠地更换出口 IP。
 
 ---
 

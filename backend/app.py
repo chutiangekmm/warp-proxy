@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from typing import Any, Dict, Optional
 
@@ -411,13 +411,15 @@ async def api_node_clear_logs(node_id: str):
 
 @app.get("/api/health")
 async def api_health():
-    """Simple health check endpoint."""
+    """Report whether the data-plane WARP service is ready for proxy traffic."""
     raw = warp_raw_status()
-    return {
-        "status": "ok",
+    service_running = _is_svc_running()
+    ready = raw == "connected" and service_running
+    return JSONResponse(status_code=200 if ready else 503, content={
+        "status": "ok" if ready else "degraded",
         "warp_status": raw,
-        "service_running": _is_svc_running(),
-    }
+        "service_running": service_running,
+    })
 
 
 def _is_svc_running() -> bool:

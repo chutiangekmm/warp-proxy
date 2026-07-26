@@ -137,6 +137,21 @@ class PackagingTests(unittest.TestCase):
                 compose,
             )
 
+    def test_packaging_does_not_schedule_blind_warp_reconnects(self):
+        entrypoint = read_text("entrypoint.sh")
+
+        self.assertNotIn("REFRESH_INTERVAL", entrypoint)
+        self.assertNotIn('warp-cli --accept-tos disconnect', entrypoint)
+
+        for compose_file in (
+            "docker-compose.yml",
+            "docker-compose.cluster.yml",
+            "docker-compose.local.yml",
+        ):
+            self.assertNotIn("REFRESH_INTERVAL", read_text(compose_file))
+
+        self.assertNotIn("REFRESH_INTERVAL", read_text(".env.example"))
+
 
 if __name__ == "__main__":
     unittest.main()
