@@ -1,3 +1,5 @@
+import asyncio
+import json
 import subprocess
 import tempfile
 import unittest
@@ -5,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import backend.warp_manager as warp_manager
+from backend import app as app_backend
 
 
 class WarpManagerTests(unittest.TestCase):
@@ -26,6 +29,35 @@ class WarpManagerTests(unittest.TestCase):
             return_value=self._cmd_result(stdout="Status update: Connected"),
         ):
             self.assertEqual(warp_manager._get_warp_status(), "connected")
+
+    def test_health_endpoint_is_unhealthy_when_warp_data_plane_is_unavailable(self):
+        with patch.object(app_backend, "warp_raw_status", return_value="disconnected"), patch.object(
+            app_backend, "_is_svc_running", return_value=True
+        ):
+            response = asyncio.run(app_backend.api_health())
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(json.loads(response.body), {
+            "status": "degraded",
+            "warp_status": "disconnected",
+            "service_running": True,
+        })
+
+    def test_health_endpoint_requires_a_running_warp_service(self):
+        with patch.object(app_backend, "warp_raw_status", return_value="connected"), patch.object(
+            app_backend, "_is_svc_running", return_value=False
+        ):
+            response = asyncio.run(app_backend.api_health())
+
+        self.assertEqual(response.status_code, 503)
+
+    def test_health_endpoint_reports_ready_only_for_connected_warp_service(self):
+        with patch.object(app_backend, "warp_raw_status", return_value="connected"), patch.object(
+            app_backend, "_is_svc_running", return_value=True
+        ):
+            response = asyncio.run(app_backend.api_health())
+
+        self.assertEqual(response.status_code, 200)
 
     def test_json_roundtrip_uses_utf8_and_parent_dirs(self):
         with tempfile.TemporaryDirectory() as tmp:

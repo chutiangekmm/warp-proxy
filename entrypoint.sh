@@ -36,18 +36,18 @@ if [ "$APP_MODE" != "node" ]; then
 fi
 
 # ── 1. Start dbus (required by warp-svc for D-Bus IPC) ─────────
-echo "[1/7] Starting dbus..."
+echo "[1/6] Starting dbus..."
 /etc/init.d/dbus start
 sleep 2
 
 # ── 2. Start WARP service ───────────────────────────────────────
-echo "[2/7] Starting warp-svc..."
+echo "[2/6] Starting warp-svc..."
 warp-svc &
 WARP_SVC_PID=$!
 sleep 4
 
 # ── 3. Initial WARP registration ────────────────────────────────
-echo "[3/7] Initial WARP registration..."
+echo "[3/6] Initial WARP registration..."
 # Ignore error if already registered (e.g., volume restored)
 warp-cli --accept-tos registration new 2>/dev/null || true
 
@@ -57,7 +57,7 @@ if ! warp-cli --accept-tos mode proxy; then
 fi
 
 # ── 4. Connect to WARP network ──────────────────────────────────
-echo "[4/7] Connecting to WARP..."
+echo "[4/6] Connecting to WARP..."
 if ! warp-cli --accept-tos connect; then
     echo "WARNING: Initial WARP connect failed; continuing so the web UI can recover."
 fi
@@ -73,28 +73,12 @@ for i in $(seq 1 15); do
     sleep 2
 done
 
-# ── 5. Optional original-style WARP reconnect refresh ───────────
-if [[ "${REFRESH_INTERVAL:-}" =~ ^[1-9][0-9]*$ ]]; then
-    echo "WARP IP refresh enabled, interval: ${REFRESH_INTERVAL} minutes."
-    (
-        while true; do
-            sleep $(( REFRESH_INTERVAL * 60 ))
-            echo "$(date '+%Y-%m-%d %H:%M:%S') - Refreshing WARP connection..."
-            warp-cli --accept-tos disconnect || true
-            sleep 3
-            warp-cli --accept-tos connect || true
-        done
-    ) &
-else
-    echo "WARP IP refresh disabled (REFRESH_INTERVAL is 0 or not set)."
-fi
-
-# Check initial IP
+# Check the initial IP before starting the management backend.
 CURRENT_IP=$(curl --socks5 127.0.0.1:40000 --max-time 8 -s https://ifconfig.me 2>/dev/null || echo "unknown")
 echo "Initial WARP IP: $CURRENT_IP"
 
-# ── 6. Start Python backend (web UI + WARP manager) ────────────
-echo "[6/7] Starting web management backend..."
+# ── 5. Start Python backend (web UI + WARP manager) ────────────
+echo "[5/6] Starting web management backend..."
 cd /app
 nohup "$PYTHON_BIN" -m uvicorn backend.app:app --host 0.0.0.0 --port 8000 --log-level info \
     > /data/backend.log 2>&1 &
@@ -121,8 +105,8 @@ for i in $(seq 1 10); do
     sleep 1
 done
 
-# ── 7. Build GOST auth string and start proxy forwarding ────────
-echo "[7/7] Starting GOST proxy forwarding..."
+# ── 6. Build GOST auth string and start proxy forwarding ────────
+echo "[6/6] Starting GOST proxy forwarding..."
 
 AUTH_STRING=""
 if [ -n "${PROXY_USER:-}" ] && [ -n "${PROXY_PASS:-}" ]; then
